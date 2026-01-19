@@ -1,15 +1,21 @@
 import { Server } from "../../server/server"
 import { cmd } from "./cmd"
 import { withNetworkOptions, resolveNetworkOptions } from "../network"
-import { Flag } from "../../flag/flag"
+import path from "path"
 
 export const ServeCommand = cmd({
   command: "serve",
-  builder: (yargs) => withNetworkOptions(yargs),
+  builder: (yargs) =>
+    withNetworkOptions(yargs).option("dir", {
+      type: "string",
+      describe: "project directory to serve (defaults to current working directory)",
+    }),
   describe: "starts a headless opencode server",
   handler: async (args) => {
-    if (!Flag.OPENCODE_SERVER_PASSWORD) {
-      console.log("Warning: OPENCODE_SERVER_PASSWORD is not set; server is unsecured.")
+    if (args.dir) {
+      const baseCwd = process.env.PWD ?? process.cwd()
+      const directory = path.resolve(baseCwd, args.dir)
+      process.chdir(directory)
     }
     const opts = await resolveNetworkOptions(args)
     const server = Server.listen(opts)
